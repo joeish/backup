@@ -1,0 +1,554 @@
+<html>
+<head>
+<title>MainActivity.kt</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cc7832;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #6897bb;}
+.s3 { color: #808080;}
+.s4 { color: #6a8759;}
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+MainActivity.kt</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span><span class="s1">com.backup.myapplication</span>
+
+<span class="s1">import android.Manifest</span>
+<span class="s1">import android.widget.ListView</span>
+<span class="s1">import javax.crypto.BadPaddingException</span>
+<span class="s1">import android.widget.ArrayAdapter</span>
+
+<span class="s1">import androidx.appcompat.app.AlertDialog</span>
+<span class="s1">import android.content.ContentProviderOperation</span>
+<span class="s1">import android.content.pm.PackageManager</span>
+<span class="s1">import android.net.Uri</span>
+<span class="s1">import android.os.Bundle</span>
+<span class="s1">import android.provider.ContactsContract</span>
+<span class="s1">import android.view.View</span>
+<span class="s1">import android.widget.Toast</span>
+<span class="s1">import androidx.appcompat.app.AppCompatActivity</span>
+<span class="s1">import androidx.core.app.ActivityCompat</span>
+<span class="s1">import androidx.core.content.ContextCompat</span>
+<span class="s1">import com.google.gson.Gson</span>
+<span class="s1">import java.io.File</span>
+<span class="s1">import java.nio.ByteBuffer</span>
+<span class="s1">import java.security.KeyStore</span>
+<span class="s1">import javax.crypto.Cipher</span>
+<span class="s1">import javax.crypto.KeyGenerator</span>
+<span class="s1">import javax.crypto.SecretKey</span>
+<span class="s1">import javax.crypto.spec.IvParameterSpec</span>
+<span class="s1">import android.security.keystore.KeyProperties</span>
+<span class="s1">import android.security.keystore.KeyGenParameterSpec</span>
+<span class="s1">import java.text.SimpleDateFormat</span>
+<span class="s1">import java.util.Locale</span>
+<span class="s1">import java.util.Date</span>
+<span class="s1">import android.content.Intent</span>
+<span class="s1">import android.app.Activity</span>
+<span class="s1">import androidx.documentfile.provider.DocumentFile</span>
+<span class="s1">import android.widget.Button</span>
+<span class="s1">import java.io.Serializable</span>
+
+<span class="s1">data </span><span class="s0">class </span><span class="s1">Contact(</span>
+    <span class="s0">val </span><span class="s1">firstName: String</span><span class="s0">,</span>
+    <span class="s0">val </span><span class="s1">middleName: String?</span><span class="s0">,</span>
+    <span class="s0">val </span><span class="s1">lastName: String?</span><span class="s0">,</span>
+    <span class="s0">val </span><span class="s1">phoneNumbers: List&lt;String&gt;</span><span class="s0">,</span>
+    <span class="s0">val </span><span class="s1">emails: List&lt;String&gt;</span><span class="s0">,</span>
+    <span class="s0">val </span><span class="s1">company: String?</span><span class="s0">,</span>
+    <span class="s0">val </span><span class="s1">department: String?</span><span class="s0">,</span>
+    <span class="s0">val </span><span class="s1">title: String?</span><span class="s0">,</span>
+    <span class="s0">val </span><span class="s1">addresses: List&lt;Address&gt;</span><span class="s0">,</span>
+    <span class="s0">val </span><span class="s1">significantDates: List&lt;ContactEvent&gt;</span><span class="s0">,</span>
+    <span class="s0">val </span><span class="s1">websites: List&lt;String&gt;</span><span class="s0">,</span>
+<span class="s1">) : Serializable</span>
+
+<span class="s1">data </span><span class="s0">class </span><span class="s1">ContactEvent(</span><span class="s0">val </span><span class="s1">type: Int</span><span class="s0">, val </span><span class="s1">date: String</span><span class="s0">, val </span><span class="s1">description: String?) : Serializable</span>
+
+<span class="s1">data </span><span class="s0">class </span><span class="s1">Address(</span>
+    <span class="s0">val </span><span class="s1">street: String?</span><span class="s0">,</span>
+    <span class="s0">val </span><span class="s1">city: String?</span><span class="s0">,</span>
+    <span class="s0">val </span><span class="s1">region: String?</span><span class="s0">,</span>
+    <span class="s0">val </span><span class="s1">postalCode: String?</span><span class="s0">,</span>
+    <span class="s0">val </span><span class="s1">country: String?</span>
+<span class="s1">) : Serializable</span>
+
+<span class="s0">class </span><span class="s1">MainActivity : AppCompatActivity() {</span>
+
+    <span class="s1">private companion </span><span class="s0">object </span><span class="s1">{</span>
+        <span class="s1">const </span><span class="s0">val </span><span class="s1">PERMISSIONS_REQUEST_CODE = </span><span class="s2">123</span>
+        <span class="s1">const </span><span class="s0">val </span><span class="s1">FILE_PICKER_REQUEST_CODE = </span><span class="s2">124</span>
+        <span class="s1">const </span><span class="s0">val </span><span class="s1">STORAGE_PERMISSION_CODE = </span><span class="s2">200</span>
+        <span class="s1">const </span><span class="s0">val </span><span class="s1">DIRECTORY_PICKER_REQUEST_CODE = </span><span class="s2">125</span>
+        <span class="s1">const </span><span class="s0">val </span><span class="s1">REQUEST_CONTACTS_PERMISSION = </span><span class="s2">1001</span>
+        <span class="s1">const </span><span class="s0">val </span><span class="s1">EMAIL_FILE_PICKER_REQUEST_CODE = </span><span class="s2">126</span>
+        <span class="s1">const </span><span class="s0">val </span><span class="s1">VIEW_BACKUP_REQUEST_CODE = </span><span class="s2">127</span>
+
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">val </span><span class="s1">gson = Gson()</span>
+    <span class="s1">private </span><span class="s0">var </span><span class="s1">isBackupOperation = </span><span class="s0">false</span>
+    <span class="s1">private </span><span class="s0">var </span><span class="s1">selectedDirectoryUri: Uri? = </span><span class="s0">null</span>
+
+    <span class="s1">override </span><span class="s0">fun </span><span class="s1">onCreate(savedInstanceState: Bundle?) {</span>
+        <span class="s0">super</span><span class="s1">.onCreate(savedInstanceState)</span>
+        <span class="s1">setContentView(R.layout.activity_main)</span>
+
+        <span class="s3">// Check and request permissions</span>
+        <span class="s0">if </span><span class="s1">(ContextCompat.checkSelfPermission(</span><span class="s0">this, </span><span class="s1">Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {</span>
+            <span class="s1">ActivityCompat.requestPermissions(</span><span class="s0">this, </span><span class="s1">arrayOf(Manifest.permission.READ_CONTACTS</span><span class="s0">, </span><span class="s1">Manifest.permission.WRITE_CONTACTS)</span><span class="s0">, </span><span class="s1">REQUEST_CONTACTS_PERMISSION)</span>
+        <span class="s1">}</span>
+
+        <span class="s3">// Generate the encryption key</span>
+        <span class="s1">generateKey()</span>
+
+        <span class="s1">findViewById&lt;View&gt;(R.id.backupButton).setOnClickListener {</span>
+            <span class="s3">// Indicate that this is a backup operation</span>
+            <span class="s1">isBackupOperation = </span><span class="s0">true</span>
+            <span class="s1">openDirectoryPicker()</span>
+        <span class="s1">}</span>
+
+        <span class="s1">findViewById&lt;View&gt;(R.id.restoreButton).setOnClickListener { openFilePicker() }</span>
+        <span class="s1">findViewById&lt;View&gt;(R.id.deleteButton).setOnClickListener {</span>
+            <span class="s1">showDeleteConfirmationDialog()</span>
+        <span class="s1">}</span>
+        <span class="s1">findViewById&lt;Button&gt;(R.id.emailContactsButton).setOnClickListener {</span>
+            <span class="s1">openFilePickerForEmail()</span>
+        <span class="s1">}</span>
+        <span class="s1">findViewById&lt;Button&gt;(R.id.viewBackupButton).setOnClickListener {</span>
+            <span class="s1">openBackupFilePicker()</span>
+        <span class="s1">}</span>
+
+
+    <span class="s1">}</span>
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">showDeleteConfirmationDialog() {</span>
+        <span class="s0">val </span><span class="s1">builder = AlertDialog.Builder(</span><span class="s0">this</span><span class="s1">)</span>
+        <span class="s1">builder.setTitle(</span><span class="s4">&quot;Delete All Contacts&quot;</span><span class="s1">)</span>
+        <span class="s1">builder.setMessage(</span><span class="s4">&quot;Are you sure you want to delete all contacts? This action cannot be undone unless you have backed up your contacts.&quot;</span><span class="s1">)</span>
+        <span class="s1">builder.setPositiveButton(</span><span class="s4">&quot;Yes&quot;</span><span class="s1">) { dialog</span><span class="s0">, </span><span class="s1">_ -&gt;</span>
+            <span class="s1">deleteAllContacts()</span>
+            <span class="s1">Toast.makeText(</span><span class="s0">this, </span><span class="s4">&quot;Contacts deleted&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span>
+            <span class="s1">dialog.dismiss()</span>
+        <span class="s1">}</span>
+        <span class="s1">builder.setNegativeButton(</span><span class="s4">&quot;No&quot;</span><span class="s1">) { dialog</span><span class="s0">, </span><span class="s1">_ -&gt;</span>
+            <span class="s1">dialog.dismiss()</span>
+        <span class="s1">}</span>
+        <span class="s1">builder.show()</span>
+    <span class="s1">}</span>
+
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">openDirectoryPicker() {</span>
+        <span class="s0">val </span><span class="s1">intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)</span>
+        <span class="s1">startActivityForResult(intent</span><span class="s0">, </span><span class="s1">DIRECTORY_PICKER_REQUEST_CODE)</span>
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">openFilePicker() {</span>
+        <span class="s0">val </span><span class="s1">intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {</span>
+            <span class="s1">addCategory(android.content.Intent.CATEGORY_OPENABLE)</span>
+            <span class="s1">type = </span><span class="s4">&quot;text/plain&quot; </span><span class="s3">// Assuming the backup files are plain text files</span>
+        <span class="s1">}</span>
+        <span class="s1">startActivityForResult(intent</span><span class="s0">, </span><span class="s1">FILE_PICKER_REQUEST_CODE)</span>
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">deleteAllContacts() {</span>
+        <span class="s0">val </span><span class="s1">ops = ArrayList&lt;ContentProviderOperation&gt;()</span>
+        <span class="s1">ops.add(ContentProviderOperation.newDelete(ContactsContract.RawContacts.CONTENT_URI).build())</span>
+        <span class="s1">contentResolver.applyBatch(ContactsContract.AUTHORITY</span><span class="s0">, </span><span class="s1">ops)</span>
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">getBackupFileName(): String {</span>
+        <span class="s0">return </span><span class="s4">&quot;backup_contacts_</span><span class="s0">${</span><span class="s1">getCurrentDateTimeString()</span><span class="s0">}</span><span class="s4">.txt&quot;</span>
+    <span class="s1">}</span>
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">openBackupFilePicker() {</span>
+        <span class="s0">val </span><span class="s1">intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {</span>
+            <span class="s1">addCategory(android.content.Intent.CATEGORY_OPENABLE)</span>
+            <span class="s1">type = </span><span class="s4">&quot;text/plain&quot; </span><span class="s3">// Assuming the backup files are plain text files</span>
+        <span class="s1">}</span>
+        <span class="s1">startActivityForResult(intent</span><span class="s0">, </span><span class="s1">VIEW_BACKUP_REQUEST_CODE)</span>
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">getAllContacts(): List&lt;Contact&gt; {</span>
+        <span class="s0">val </span><span class="s1">contactsList = mutableListOf&lt;Contact&gt;()</span>
+
+        <span class="s0">val </span><span class="s1">projection = arrayOf(</span>
+            <span class="s1">ContactsContract.Contacts._ID</span><span class="s0">,</span>
+            <span class="s1">ContactsContract.Contacts.DISPLAY_NAME_PRIMARY</span>
+        <span class="s1">)</span>
+
+        <span class="s0">val </span><span class="s1">cursor = contentResolver.query(</span>
+            <span class="s1">ContactsContract.Contacts.CONTENT_URI</span><span class="s0">,</span>
+            <span class="s1">projection</span><span class="s0">,</span>
+            <span class="s0">null,</span>
+            <span class="s0">null,</span>
+            <span class="s0">null</span>
+        <span class="s1">)</span>
+
+        <span class="s1">cursor?.use {</span>
+            <span class="s0">while </span><span class="s1">(it.moveToNext()) {</span>
+                <span class="s0">val </span><span class="s1">id = it.getLong(it.getColumnIndex(ContactsContract.Contacts._ID))</span>
+                <span class="s0">val </span><span class="s1">displayName = it.getString(it.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME_PRIMARY))</span>
+
+                <span class="s0">val </span><span class="s1">phoneNumbers = fetchPhoneNumbersForContact(id)</span>
+                <span class="s0">val </span><span class="s1">emails = fetchEmailsForContact(id)</span>
+                <span class="s0">val </span><span class="s1">significantDates = fetchSignificantDatesForContact(id)</span>
+                <span class="s0">val </span><span class="s1">websites = fetchWebsitesForContact(id)  </span><span class="s3">// Fetch websites</span>
+
+                <span class="s1">contactsList.add(Contact(displayName</span><span class="s0">, null, null, </span><span class="s1">phoneNumbers</span><span class="s0">, </span><span class="s1">emails</span><span class="s0">, null, null, null, </span><span class="s1">listOf()</span><span class="s0">, </span><span class="s1">significantDates</span><span class="s0">, </span><span class="s1">websites))  </span><span class="s3">// Pass websites as a parameter</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+
+        <span class="s0">return </span><span class="s1">contactsList</span>
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">openFilePickerForEmail() {</span>
+        <span class="s0">val </span><span class="s1">intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {</span>
+            <span class="s1">addCategory(android.content.Intent.CATEGORY_OPENABLE)</span>
+            <span class="s1">type = </span><span class="s4">&quot;*/*&quot;</span>
+            <span class="s3">// If you have saved the last backup location, you can set it here</span>
+            <span class="s3">// putExtra(DocumentsContract.EXTRA_INITIAL_URI, lastBackupUri)</span>
+        <span class="s1">}</span>
+        <span class="s1">startActivityForResult(intent</span><span class="s0">, </span><span class="s1">EMAIL_FILE_PICKER_REQUEST_CODE)</span>
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">sendEmailWithAttachment(uri: Uri) {</span>
+        <span class="s0">val </span><span class="s1">emailIntent = Intent(Intent.ACTION_SEND).apply {</span>
+            <span class="s1">type = </span><span class="s4">&quot;vnd.android.cursor.dir/email&quot;</span>
+            <span class="s1">putExtra(Intent.EXTRA_STREAM</span><span class="s0">, </span><span class="s1">uri)</span>
+            <span class="s1">putExtra(Intent.EXTRA_SUBJECT</span><span class="s0">, </span><span class="s4">&quot;Backup Contacts&quot;</span><span class="s1">)</span>
+            <span class="s1">putExtra(Intent.EXTRA_TEXT</span><span class="s0">, </span><span class="s4">&quot;Attached is the backup of contacts.&quot;</span><span class="s1">)</span>
+        <span class="s1">}</span>
+        <span class="s1">startActivity(Intent.createChooser(emailIntent</span><span class="s0">, </span><span class="s4">&quot;Send email...&quot;</span><span class="s1">))</span>
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">fetchPhoneNumbersForContact(contactId: Long): List&lt;String&gt; {</span>
+        <span class="s0">val </span><span class="s1">numbers = mutableListOf&lt;String&gt;()</span>
+        <span class="s1">contentResolver.query(</span>
+            <span class="s1">ContactsContract.CommonDataKinds.Phone.CONTENT_URI</span><span class="s0">,</span>
+            <span class="s0">null,</span>
+            <span class="s4">&quot;</span><span class="s0">${</span><span class="s1">ContactsContract.CommonDataKinds.Phone.CONTACT_ID</span><span class="s0">} </span><span class="s4">= ?&quot;</span><span class="s0">,</span>
+            <span class="s1">arrayOf(contactId.toString())</span><span class="s0">,</span>
+            <span class="s0">null</span>
+        <span class="s1">)?.use {</span>
+            <span class="s0">while </span><span class="s1">(it.moveToNext()) {</span>
+                <span class="s1">numbers.add(it.getString(it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)))</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+        <span class="s0">return </span><span class="s1">numbers</span>
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">fetchEmailsForContact(contactId: Long): List&lt;String&gt; {</span>
+        <span class="s0">val </span><span class="s1">emails = mutableListOf&lt;String&gt;()</span>
+        <span class="s1">contentResolver.query(</span>
+            <span class="s1">ContactsContract.CommonDataKinds.Email.CONTENT_URI</span><span class="s0">,</span>
+            <span class="s0">null,</span>
+            <span class="s4">&quot;</span><span class="s0">${</span><span class="s1">ContactsContract.CommonDataKinds.Email.CONTACT_ID</span><span class="s0">} </span><span class="s4">= ?&quot;</span><span class="s0">,</span>
+            <span class="s1">arrayOf(contactId.toString())</span><span class="s0">,</span>
+            <span class="s0">null</span>
+        <span class="s1">)?.use {</span>
+            <span class="s0">while </span><span class="s1">(it.moveToNext()) {</span>
+                <span class="s1">emails.add(it.getString(it.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS)))</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+        <span class="s0">return </span><span class="s1">emails</span>
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">fetchWebsitesForContact(contactId: Long): List&lt;String&gt; {</span>
+        <span class="s0">val </span><span class="s1">websites = mutableListOf&lt;String&gt;()</span>
+        <span class="s1">contentResolver.query(</span>
+            <span class="s1">ContactsContract.Data.CONTENT_URI</span><span class="s0">,</span>
+            <span class="s0">null,</span>
+            <span class="s4">&quot;</span><span class="s0">${</span><span class="s1">ContactsContract.Data.CONTACT_ID</span><span class="s0">} </span><span class="s4">= ? AND </span><span class="s0">${</span><span class="s1">ContactsContract.Data.MIMETYPE</span><span class="s0">} </span><span class="s4">= ?&quot;</span><span class="s0">,</span>
+            <span class="s1">arrayOf(contactId.toString()</span><span class="s0">, </span><span class="s1">ContactsContract.CommonDataKinds.Website.CONTENT_ITEM_TYPE)</span><span class="s0">,</span>
+            <span class="s0">null</span>
+        <span class="s1">)?.use {</span>
+            <span class="s0">while </span><span class="s1">(it.moveToNext()) {</span>
+                <span class="s1">websites.add(it.getString(it.getColumnIndex(ContactsContract.CommonDataKinds.Website.URL)))</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+        <span class="s0">return </span><span class="s1">websites</span>
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">fetchSignificantDatesForContact(contactId: Long): List&lt;ContactEvent&gt; {</span>
+        <span class="s0">val </span><span class="s1">events = mutableListOf&lt;ContactEvent&gt;()</span>
+        <span class="s1">contentResolver.query(</span>
+            <span class="s1">ContactsContract.Data.CONTENT_URI</span><span class="s0">,</span>
+            <span class="s0">null,</span>
+            <span class="s4">&quot;</span><span class="s0">${</span><span class="s1">ContactsContract.Data.CONTACT_ID</span><span class="s0">} </span><span class="s4">= ? AND </span><span class="s0">${</span><span class="s1">ContactsContract.Data.MIMETYPE</span><span class="s0">} </span><span class="s4">= ?&quot;</span><span class="s0">,</span>
+            <span class="s1">arrayOf(contactId.toString()</span><span class="s0">, </span><span class="s1">ContactsContract.CommonDataKinds.Event.CONTENT_ITEM_TYPE)</span><span class="s0">,</span>
+            <span class="s0">null</span>
+        <span class="s1">)?.use {</span>
+            <span class="s0">while </span><span class="s1">(it.moveToNext()) {</span>
+                <span class="s0">val </span><span class="s1">eventType = it.getInt(it.getColumnIndex(ContactsContract.CommonDataKinds.Event.TYPE))</span>
+                <span class="s0">val </span><span class="s1">eventDate = it.getString(it.getColumnIndex(ContactsContract.CommonDataKinds.Event.START_DATE))</span>
+                <span class="s0">val </span><span class="s1">eventDescription = it.getString(it.getColumnIndex(ContactsContract.CommonDataKinds.Event.LABEL))</span>
+                <span class="s1">events.add(ContactEvent(eventType</span><span class="s0">, </span><span class="s1">eventDate</span><span class="s0">, </span><span class="s1">eventDescription))</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+        <span class="s0">return </span><span class="s1">events</span>
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">requestStoragePermission() {</span>
+        <span class="s0">if </span><span class="s1">(ActivityCompat.shouldShowRequestPermissionRationale(</span><span class="s0">this, </span><span class="s1">Manifest.permission.WRITE_EXTERNAL_STORAGE)) {</span>
+            <span class="s3">// Optionally, show an explanation to the user here</span>
+        <span class="s1">} </span><span class="s0">else </span><span class="s1">{</span>
+            <span class="s1">ActivityCompat.requestPermissions(</span><span class="s0">this, </span><span class="s1">arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)</span><span class="s0">, </span><span class="s1">STORAGE_PERMISSION_CODE)</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">checkAndRequestPermissions() {</span>
+        <span class="s0">val </span><span class="s1">requiredPermissions = arrayOf(</span>
+            <span class="s1">Manifest.permission.READ_CONTACTS</span><span class="s0">,</span>
+            <span class="s1">Manifest.permission.WRITE_CONTACTS</span>
+        <span class="s1">)</span>
+
+        <span class="s0">val </span><span class="s1">deniedPermissions = requiredPermissions.filter {</span>
+            <span class="s1">ContextCompat.checkSelfPermission(</span><span class="s0">this, </span><span class="s1">it) != PackageManager.PERMISSION_GRANTED</span>
+        <span class="s1">}</span>
+
+        <span class="s0">if </span><span class="s1">(deniedPermissions.isNotEmpty()) {</span>
+            <span class="s1">ActivityCompat.requestPermissions(</span><span class="s0">this, </span><span class="s1">deniedPermissions.toTypedArray()</span><span class="s0">, </span><span class="s1">PERMISSIONS_REQUEST_CODE)</span>
+        <span class="s1">} </span><span class="s0">else </span><span class="s1">{</span>
+            <span class="s1">backupContactsToSelectedDirectory(selectedDirectoryUri!!)</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+    <span class="s1">override </span><span class="s0">fun </span><span class="s1">onRequestPermissionsResult(requestCode: Int</span><span class="s0">, </span><span class="s1">permissions: Array&lt;String&gt;</span><span class="s0">, </span><span class="s1">grantResults: IntArray) {</span>
+        <span class="s0">when </span><span class="s1">(requestCode) {</span>
+            <span class="s1">PERMISSIONS_REQUEST_CODE -&gt; {</span>
+                <span class="s0">if </span><span class="s1">(grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {</span>
+                    <span class="s1">backupContactsToSelectedDirectory(selectedDirectoryUri!!)</span>
+                <span class="s1">} </span><span class="s0">else </span><span class="s1">{</span>
+                    <span class="s1">Toast.makeText(</span><span class="s0">this, </span><span class="s4">&quot;Permission denied to read/write contacts&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+            <span class="s1">STORAGE_PERMISSION_CODE -&gt; {</span>
+                <span class="s0">if </span><span class="s1">(grantResults.isNotEmpty() &amp;&amp; grantResults[</span><span class="s2">0</span><span class="s1">] == PackageManager.PERMISSION_GRANTED) {</span>
+                    <span class="s1">openDirectoryPicker() </span><span class="s3">// Call the directory picker once storage permission is granted</span>
+                <span class="s1">} </span><span class="s0">else </span><span class="s1">{</span>
+                    <span class="s1">Toast.makeText(</span><span class="s0">this, </span><span class="s4">&quot;Permission denied to read/write storage&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+            <span class="s1">REQUEST_CONTACTS_PERMISSION -&gt; {</span>
+                <span class="s0">if </span><span class="s1">(grantResults.isNotEmpty() &amp;&amp; grantResults[</span><span class="s2">0</span><span class="s1">] == PackageManager.PERMISSION_GRANTED) {</span>
+                    <span class="s3">// Do something after contacts permission is granted, if needed</span>
+                <span class="s1">} </span><span class="s0">else </span><span class="s1">{</span>
+                    <span class="s1">Toast.makeText(</span><span class="s0">this, </span><span class="s4">&quot;Permission denied to read/write contacts&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+            <span class="s0">else </span><span class="s1">-&gt; </span><span class="s0">super</span><span class="s1">.onRequestPermissionsResult(requestCode</span><span class="s0">, </span><span class="s1">permissions</span><span class="s0">, </span><span class="s1">grantResults)</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">backupContactsToSelectedDirectory(uri: Uri) {</span>
+        <span class="s0">val </span><span class="s1">documentFile = DocumentFile.fromTreeUri(</span><span class="s0">this, </span><span class="s1">uri)</span>
+        <span class="s0">val </span><span class="s1">backupFile = documentFile?.createFile(</span><span class="s4">&quot;text/plain&quot;</span><span class="s0">, </span><span class="s1">getBackupFileName())</span>
+        <span class="s1">backupFile?.uri?.let { backupUri -&gt;</span>
+            <span class="s3">// Now you can write to backupUri using contentResolver</span>
+            <span class="s1">contentResolver.openOutputStream(backupUri)?.use { outputStream -&gt;</span>
+                <span class="s0">val </span><span class="s1">contacts = getAllContacts()</span>
+                <span class="s0">val </span><span class="s1">jsonString = gson.toJson(contacts)</span>
+                <span class="s0">val </span><span class="s1">encryptedData = encrypt(jsonString.toByteArray())</span>
+                <span class="s1">outputStream.write(encryptedData)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+    <span class="s1">override </span><span class="s0">fun </span><span class="s1">onActivityResult(requestCode: Int</span><span class="s0">, </span><span class="s1">resultCode: Int</span><span class="s0">, </span><span class="s1">data: Intent?) {</span>
+        <span class="s0">super</span><span class="s1">.onActivityResult(requestCode</span><span class="s0">, </span><span class="s1">resultCode</span><span class="s0">, </span><span class="s1">data)</span>
+        <span class="s0">if </span><span class="s1">(resultCode == Activity.RESULT_OK) {</span>
+            <span class="s0">when </span><span class="s1">(requestCode) {</span>
+                <span class="s1">DIRECTORY_PICKER_REQUEST_CODE -&gt; {</span>
+                    <span class="s1">data?.data?.also { uri -&gt;</span>
+                        <span class="s0">if </span><span class="s1">(isBackupOperation) {</span>
+                            <span class="s3">// Handle backup to the selected directory</span>
+                            <span class="s1">backupContactsToSelectedDirectory(uri)</span>
+                        <span class="s1">}</span>
+                    <span class="s1">}</span>
+                <span class="s1">}</span>
+                <span class="s1">FILE_PICKER_REQUEST_CODE -&gt; {</span>
+                    <span class="s1">data?.data?.also { uri -&gt;</span>
+                        <span class="s1">restoreContactsFromUri(uri)</span>
+                    <span class="s1">}</span>
+                <span class="s1">}</span>
+                <span class="s1">EMAIL_FILE_PICKER_REQUEST_CODE -&gt; {</span>
+                    <span class="s1">data?.data?.let { uri -&gt;</span>
+                        <span class="s1">sendEmailWithAttachment(uri)</span>
+                    <span class="s1">}</span>
+                <span class="s1">}</span>
+                <span class="s1">VIEW_BACKUP_REQUEST_CODE -&gt; {</span>
+                    <span class="s1">data?.data?.also { uri -&gt;</span>
+                        <span class="s1">displayBackupContacts(uri)</span>
+                    <span class="s1">}</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">displayBackupContacts(uri: Uri) {</span>
+        <span class="s0">val </span><span class="s1">encryptedData = contentResolver.openInputStream(uri)?.readBytes()</span>
+        <span class="s0">if </span><span class="s1">(encryptedData != </span><span class="s0">null</span><span class="s1">) {</span>
+            <span class="s0">val </span><span class="s1">decryptedData = decrypt(encryptedData)</span>
+            <span class="s0">val </span><span class="s1">jsonString = String(decryptedData)</span>
+            <span class="s0">val </span><span class="s1">contacts = gson.fromJson(jsonString</span><span class="s0">, </span><span class="s1">Array&lt;Contact&gt;::</span><span class="s0">class</span><span class="s1">.java).toList()</span>
+
+            <span class="s3">// Display the contacts in a ListView</span>
+            <span class="s1">displayContactsInListView(contacts)</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">displayContactsInListView(contacts: List&lt;Contact&gt;) {</span>
+        <span class="s0">val </span><span class="s1">intent = Intent(</span><span class="s0">this, </span><span class="s1">DisplayContactsActivity::</span><span class="s0">class</span><span class="s1">.java)</span>
+        <span class="s1">intent.putExtra(</span><span class="s4">&quot;contacts&quot;</span><span class="s0">, </span><span class="s1">contacts.toTypedArray())</span>
+        <span class="s1">startActivity(intent)</span>
+    <span class="s1">}</span>
+
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">restoreContactsFromUri(uri: Uri) {</span>
+        <span class="s1">contentResolver.openInputStream(uri)?.use { inputStream -&gt;</span>
+            <span class="s0">val </span><span class="s1">encryptedData = inputStream.readBytes()</span>
+            <span class="s0">val </span><span class="s1">decryptedData = decrypt(encryptedData)</span>
+            <span class="s0">val </span><span class="s1">jsonString = String(decryptedData)</span>
+            <span class="s0">val </span><span class="s1">contacts = gson.fromJson(jsonString</span><span class="s0">, </span><span class="s1">Array&lt;Contact&gt;::</span><span class="s0">class</span><span class="s1">.java).toList()</span>
+
+            <span class="s3">// Now, you can use the contacts list to restore them to the device.</span>
+            <span class="s0">for </span><span class="s1">(contact </span><span class="s0">in </span><span class="s1">contacts) {</span>
+                <span class="s1">addContactToDevice(contact)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">addContactToDevice(contact: Contact) {</span>
+        <span class="s0">val </span><span class="s1">ops = ArrayList&lt;ContentProviderOperation&gt;()</span>
+
+        <span class="s3">// Insert raw contact</span>
+        <span class="s1">ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)</span>
+            <span class="s1">.withValue(ContactsContract.RawContacts.ACCOUNT_TYPE</span><span class="s0">, null</span><span class="s1">)</span>
+            <span class="s1">.withValue(ContactsContract.RawContacts.ACCOUNT_NAME</span><span class="s0">, null</span><span class="s1">)</span>
+            <span class="s1">.build())</span>
+
+        <span class="s3">// Insert name</span>
+        <span class="s1">ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)</span>
+            <span class="s1">.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID</span><span class="s0">, </span><span class="s2">0</span><span class="s1">)</span>
+            <span class="s1">.withValue(ContactsContract.Data.MIMETYPE</span><span class="s0">, </span><span class="s1">ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)</span>
+            <span class="s1">.withValue(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME</span><span class="s0">, </span><span class="s1">contact.firstName)</span>
+            <span class="s1">.withValue(ContactsContract.CommonDataKinds.StructuredName.MIDDLE_NAME</span><span class="s0">, </span><span class="s1">contact.middleName)</span>
+            <span class="s1">.withValue(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME</span><span class="s0">, </span><span class="s1">contact.lastName)</span>
+            <span class="s1">.build())</span>
+
+        <span class="s3">// Insert phone numbers</span>
+        <span class="s0">for </span><span class="s1">(number </span><span class="s0">in </span><span class="s1">contact.phoneNumbers) {</span>
+            <span class="s1">ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)</span>
+                <span class="s1">.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID</span><span class="s0">, </span><span class="s2">0</span><span class="s1">)</span>
+                <span class="s1">.withValue(ContactsContract.Data.MIMETYPE</span><span class="s0">, </span><span class="s1">ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)</span>
+                <span class="s1">.withValue(ContactsContract.CommonDataKinds.Phone.NUMBER</span><span class="s0">, </span><span class="s1">number)</span>
+                <span class="s1">.build())</span>
+        <span class="s1">}</span>
+
+        <span class="s3">// Insert emails</span>
+        <span class="s0">for </span><span class="s1">(email </span><span class="s0">in </span><span class="s1">contact.emails) {</span>
+            <span class="s1">ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)</span>
+                <span class="s1">.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID</span><span class="s0">, </span><span class="s2">0</span><span class="s1">)</span>
+                <span class="s1">.withValue(ContactsContract.Data.MIMETYPE</span><span class="s0">, </span><span class="s1">ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)</span>
+                <span class="s1">.withValue(ContactsContract.CommonDataKinds.Email.ADDRESS</span><span class="s0">, </span><span class="s1">email)</span>
+                <span class="s1">.build())</span>
+        <span class="s1">}</span>
+
+        <span class="s3">// Insert websites</span>
+        <span class="s0">for </span><span class="s1">(website </span><span class="s0">in </span><span class="s1">contact.websites) {</span>
+            <span class="s1">ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)</span>
+                <span class="s1">.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID</span><span class="s0">, </span><span class="s2">0</span><span class="s1">)</span>
+                <span class="s1">.withValue(ContactsContract.Data.MIMETYPE</span><span class="s0">, </span><span class="s1">ContactsContract.CommonDataKinds.Website.CONTENT_ITEM_TYPE)</span>
+                <span class="s1">.withValue(ContactsContract.CommonDataKinds.Website.URL</span><span class="s0">, </span><span class="s1">website)</span>
+                <span class="s1">.build())</span>
+        <span class="s1">}</span>
+
+        <span class="s3">// Insert significant dates</span>
+        <span class="s0">for </span><span class="s1">(event </span><span class="s0">in </span><span class="s1">contact.significantDates) {</span>
+            <span class="s1">ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)</span>
+                <span class="s1">.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID</span><span class="s0">, </span><span class="s2">0</span><span class="s1">)</span>
+                <span class="s1">.withValue(ContactsContract.Data.MIMETYPE</span><span class="s0">, </span><span class="s1">ContactsContract.CommonDataKinds.Event.CONTENT_ITEM_TYPE)</span>
+                <span class="s1">.withValue(ContactsContract.CommonDataKinds.Event.TYPE</span><span class="s0">, </span><span class="s1">event.type)</span>
+                <span class="s1">.withValue(ContactsContract.CommonDataKinds.Event.START_DATE</span><span class="s0">, </span><span class="s1">event.date)</span>
+                <span class="s1">.withValue(ContactsContract.CommonDataKinds.Event.LABEL</span><span class="s0">, </span><span class="s1">event.description)</span>
+                <span class="s1">.build())</span>
+        <span class="s1">}</span>
+
+        <span class="s0">try </span><span class="s1">{</span>
+            <span class="s1">contentResolver.applyBatch(ContactsContract.AUTHORITY</span><span class="s0">, </span><span class="s1">ops)</span>
+        <span class="s1">} catch (e: Exception) {</span>
+            <span class="s1">e.printStackTrace()</span>
+            <span class="s1">Toast.makeText(</span><span class="s0">this, </span><span class="s4">&quot;Error restoring contact: </span><span class="s0">${</span><span class="s1">contact.firstName</span><span class="s0">}</span><span class="s4">&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">generateKey() {</span>
+        <span class="s0">val </span><span class="s1">keyStore = KeyStore.getInstance(</span><span class="s4">&quot;AndroidKeyStore&quot;</span><span class="s1">)</span>
+        <span class="s1">keyStore.load(</span><span class="s0">null</span><span class="s1">)</span>
+
+        <span class="s0">if </span><span class="s1">(!keyStore.containsAlias(</span><span class="s4">&quot;BackupKeyAlias&quot;</span><span class="s1">)) {</span>
+            <span class="s0">val </span><span class="s1">keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES</span><span class="s0">, </span><span class="s4">&quot;AndroidKeyStore&quot;</span><span class="s1">)</span>
+            <span class="s1">keyGenerator.init(</span>
+                <span class="s1">KeyGenParameterSpec.Builder(</span><span class="s4">&quot;BackupKeyAlias&quot;</span><span class="s0">,</span>
+                    <span class="s1">KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)</span>
+                    <span class="s1">.setBlockModes(KeyProperties.BLOCK_MODE_CBC)</span>
+                    <span class="s1">.setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)</span>
+                    <span class="s1">.build()</span>
+            <span class="s1">)</span>
+            <span class="s1">keyGenerator.generateKey()</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">encrypt(data: ByteArray): ByteArray {</span>
+        <span class="s0">val </span><span class="s1">keyStore = KeyStore.getInstance(</span><span class="s4">&quot;AndroidKeyStore&quot;</span><span class="s1">)</span>
+        <span class="s1">keyStore.load(</span><span class="s0">null</span><span class="s1">)</span>
+
+        <span class="s0">val </span><span class="s1">secretKey = keyStore.getKey(</span><span class="s4">&quot;BackupKeyAlias&quot;</span><span class="s0">, null</span><span class="s1">) </span><span class="s0">as </span><span class="s1">SecretKey</span>
+
+        <span class="s0">val </span><span class="s1">cipher = Cipher.getInstance(</span><span class="s4">&quot;AES/CBC/PKCS7Padding&quot;</span><span class="s1">)</span>
+        <span class="s1">cipher.init(Cipher.ENCRYPT_MODE</span><span class="s0">, </span><span class="s1">secretKey)</span>
+
+        <span class="s0">val </span><span class="s1">iv = cipher.iv</span>
+        <span class="s0">val </span><span class="s1">encryption = cipher.doFinal(data)</span>
+
+        <span class="s0">return </span><span class="s1">ByteBuffer.allocate(</span><span class="s2">4 </span><span class="s1">+ iv.size + encryption.size)</span>
+            <span class="s1">.putInt(iv.size)</span>
+            <span class="s1">.put(iv)</span>
+            <span class="s1">.put(encryption)</span>
+            <span class="s1">.array()</span>
+    <span class="s1">}</span>
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">decrypt(data: ByteArray): ByteArray {</span>
+        <span class="s0">val </span><span class="s1">keyStore = KeyStore.getInstance(</span><span class="s4">&quot;AndroidKeyStore&quot;</span><span class="s1">)</span>
+        <span class="s1">keyStore.load(</span><span class="s0">null</span><span class="s1">)</span>
+
+        <span class="s0">val </span><span class="s1">secretKey = keyStore.getKey(</span><span class="s4">&quot;BackupKeyAlias&quot;</span><span class="s0">, null</span><span class="s1">) </span><span class="s0">as </span><span class="s1">SecretKey</span>
+
+        <span class="s0">val </span><span class="s1">buffer = ByteBuffer.wrap(data)</span>
+        <span class="s0">val </span><span class="s1">ivLength = buffer.int</span>
+        <span class="s0">val </span><span class="s1">iv = ByteArray(ivLength)</span>
+        <span class="s1">buffer.get(iv)</span>
+        <span class="s0">val </span><span class="s1">cipherBytes = ByteArray(buffer.remaining())</span>
+        <span class="s1">buffer.get(cipherBytes)</span>
+
+        <span class="s0">val </span><span class="s1">cipher = Cipher.getInstance(</span><span class="s4">&quot;AES/CBC/PKCS7Padding&quot;</span><span class="s1">)</span>
+        <span class="s1">cipher.init(Cipher.DECRYPT_MODE</span><span class="s0">, </span><span class="s1">secretKey</span><span class="s0">, </span><span class="s1">IvParameterSpec(iv))</span>
+
+        <span class="s0">try </span><span class="s1">{</span>
+            <span class="s0">return </span><span class="s1">cipher.doFinal(cipherBytes)</span>
+        <span class="s1">} catch (e: BadPaddingException) {</span>
+            <span class="s0">throw </span><span class="s1">RuntimeException(</span><span class="s4">&quot;Failed to decrypt data. Possible reasons: corrupted data, wrong key, wrong IV.&quot;</span><span class="s0">, </span><span class="s1">e)</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+
+    <span class="s1">private </span><span class="s0">fun </span><span class="s1">getCurrentDateTimeString(): String {</span>
+        <span class="s0">val </span><span class="s1">formatter = SimpleDateFormat(</span><span class="s4">&quot;ddMMyyyyHHmm&quot;</span><span class="s0">, </span><span class="s1">Locale.getDefault())</span>
+        <span class="s0">return </span><span class="s1">formatter.format(Date())</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+</pre>
+</body>
+</html>

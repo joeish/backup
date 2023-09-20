@@ -1,0 +1,67 @@
+<html>
+<head>
+<title>ContactDetailsActivity.kt</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cc7832;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #6a8759;}
+.s3 { color: #808080;}
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+ContactDetailsActivity.kt</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span><span class="s1">com.backup.myapplication</span>
+
+<span class="s1">import androidx.appcompat.app.AppCompatActivity</span>
+<span class="s1">import android.os.Bundle</span>
+<span class="s1">import android.widget.TextView</span>
+
+
+<span class="s0">class </span><span class="s1">ContactDetailsActivity : AppCompatActivity() {</span>
+
+    <span class="s1">override </span><span class="s0">fun </span><span class="s1">onCreate(savedInstanceState: Bundle?) {</span>
+        <span class="s0">super</span><span class="s1">.onCreate(savedInstanceState)</span>
+        <span class="s1">setContentView(R.layout.activity_contact_details)</span>
+
+        <span class="s0">val </span><span class="s1">contact = intent.getSerializableExtra(</span><span class="s2">&quot;contact&quot;</span><span class="s1">) </span><span class="s0">as </span><span class="s1">Contact</span>
+
+        <span class="s3">// Populate the UI elements with the contact details</span>
+        <span class="s1">findViewById&lt;TextView&gt;(R.id.firstNameTextView).text = </span><span class="s2">&quot;First Name: </span><span class="s0">${</span><span class="s1">contact.firstName</span><span class="s0">}</span><span class="s2">&quot;</span>
+        <span class="s1">findViewById&lt;TextView&gt;(R.id.middleNameTextView).text = </span><span class="s2">&quot;Middle Name: </span><span class="s0">${</span><span class="s1">contact.middleName ?: </span><span class="s2">&quot;N/A&quot;</span><span class="s0">}</span><span class="s2">&quot;</span>
+        <span class="s1">findViewById&lt;TextView&gt;(R.id.lastNameTextView).text = </span><span class="s2">&quot;Last Name: </span><span class="s0">${</span><span class="s1">contact.lastName ?: </span><span class="s2">&quot;N/A&quot;</span><span class="s0">}</span><span class="s2">&quot;</span>
+        <span class="s1">findViewById&lt;TextView&gt;(R.id.phoneNumbersTextView).text = </span><span class="s2">&quot;Phone Numbers: </span><span class="s0">${</span><span class="s1">contact.phoneNumbers.joinToString(</span><span class="s2">&quot;, &quot;</span><span class="s1">)</span><span class="s0">}</span><span class="s2">&quot;</span>
+        <span class="s1">findViewById&lt;TextView&gt;(R.id.emailsTextView).text = </span><span class="s2">&quot;Emails: </span><span class="s0">${</span><span class="s1">contact.emails.joinToString(</span><span class="s2">&quot;, &quot;</span><span class="s1">)</span><span class="s0">}</span><span class="s2">&quot;</span>
+        <span class="s1">findViewById&lt;TextView&gt;(R.id.companyTextView).text = </span><span class="s2">&quot;Company: </span><span class="s0">${</span><span class="s1">contact.company ?: </span><span class="s2">&quot;N/A&quot;</span><span class="s0">}</span><span class="s2">&quot;</span>
+        <span class="s1">findViewById&lt;TextView&gt;(R.id.departmentTextView).text = </span><span class="s2">&quot;Department: </span><span class="s0">${</span><span class="s1">contact.department ?: </span><span class="s2">&quot;N/A&quot;</span><span class="s0">}</span><span class="s2">&quot;</span>
+        <span class="s1">findViewById&lt;TextView&gt;(R.id.titleTextView).text = </span><span class="s2">&quot;Title: </span><span class="s0">${</span><span class="s1">contact.title ?: </span><span class="s2">&quot;N/A&quot;</span><span class="s0">}</span><span class="s2">&quot;</span>
+
+        <span class="s3">// For addresses, you might want to format them in a more readable way</span>
+        <span class="s0">val </span><span class="s1">addresses = contact.addresses.map { address -&gt;</span>
+            <span class="s1">listOf(</span>
+                <span class="s1">address.street</span><span class="s0">,</span>
+                <span class="s1">address.city</span><span class="s0">,</span>
+                <span class="s1">address.region</span><span class="s0">,</span>
+                <span class="s1">address.postalCode</span><span class="s0">,</span>
+                <span class="s1">address.country</span>
+            <span class="s1">).filterNotNull().joinToString(</span><span class="s2">&quot;, &quot;</span><span class="s1">)</span>
+        <span class="s1">}</span>
+        <span class="s1">findViewById&lt;TextView&gt;(R.id.addressesTextView).text = </span><span class="s2">&quot;Addresses: </span><span class="s0">${</span><span class="s1">addresses.joinToString(</span><span class="s2">&quot;</span><span class="s0">\n</span><span class="s2">&quot;</span><span class="s1">)</span><span class="s0">}</span><span class="s2">&quot;</span>
+
+        <span class="s3">// For significant dates</span>
+        <span class="s0">val </span><span class="s1">dates = contact.significantDates.map { event -&gt;</span>
+            <span class="s2">&quot;</span><span class="s0">${</span><span class="s1">event.date</span><span class="s0">} </span><span class="s2">(</span><span class="s0">${</span><span class="s1">event.description ?: </span><span class="s2">&quot;N/A&quot;</span><span class="s0">}</span><span class="s2">)&quot;</span>
+        <span class="s1">}</span>
+        <span class="s1">findViewById&lt;TextView&gt;(R.id.significantDatesTextView).text = </span><span class="s2">&quot;Significant Dates: </span><span class="s0">${</span><span class="s1">dates.joinToString(</span><span class="s2">&quot;</span><span class="s0">\n</span><span class="s2">&quot;</span><span class="s1">)</span><span class="s0">}</span><span class="s2">&quot;</span>
+
+        <span class="s1">findViewById&lt;TextView&gt;(R.id.websitesTextView).text = </span><span class="s2">&quot;Websites: </span><span class="s0">${</span><span class="s1">contact.websites.joinToString(</span><span class="s2">&quot;, &quot;</span><span class="s1">)</span><span class="s0">}</span><span class="s2">&quot;</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+</pre>
+</body>
+</html>
